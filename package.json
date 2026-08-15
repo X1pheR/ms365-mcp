@@ -1,0 +1,10 @@
+{
+  "name": "ms365-mcp-container",
+  "version": "0.128.2-x1pher.1",
+  "description": "Community-maintained container distribution for @softeria/ms-365-mcp-server 0.128.2",
+  "license": "MIT",
+  "private": true,
+  "dependencies": {
+    "@softeria/ms-365-mcp-server": "0.128.2"
+  }
+}

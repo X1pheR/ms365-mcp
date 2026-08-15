@@ -1,0 +1,79 @@
+name: Release
+
+on:
+  push:
+    tags:
+      - "v*"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out source
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          fetch-depth: 0
+
+      - name: Verify release source
+        shell: bash
+        run: |
+          set -euo pipefail
+          distribution_version="$(node -p "require('./package.json').version")"
+          upstream_version="$(node -p "require('./package.json').dependencies['@softeria/ms-365-mcp-server']")"
+          test "$GITHUB_REF_NAME" = "v${distribution_version}"
+          test "$upstream_version" = "0.128.2"
+          git fetch origin main --depth=1
+          test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
+          npm audit --omit=dev --package-lock-only --audit-level=moderate
+
+      - name: Authenticate to GHCR
+        shell: bash
+        env:
+          GHCR_TOKEN: ${{ github.token }}
+        run: echo "$GHCR_TOKEN" | docker login ghcr.io --username "$GITHUB_ACTOR" --password-stdin
+
+      - name: Build and publish image
+        id: image
+        shell: bash
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          short_sha="${GITHUB_SHA::7}"
+          image="ghcr.io/x1pher/ms365-mcp"
+          docker build \
+            --build-arg VERSION="$version" \
+            --build-arg REVISION="$GITHUB_SHA" \
+            -t "$image:$version" \
+            -t "$image:$version-$short_sha" \
+            .
+          docker push "$image:$version"
+          docker push "$image:$version-$short_sha"
+          digest="$(docker buildx imagetools inspect "$image:$version" | awk '/^Digest:/ {print $2; exit}')"
+          test -n "$digest"
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+
+      - name: Publish GitHub release
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          IMAGE_DIGEST: ${{ steps.image.outputs.digest }}
+        run: |
+          set -euo pipefail
+          version="$(node -p "require('./package.json').version")"
+          upstream_version="$(node -p "require('./package.json').dependencies['@softeria/ms-365-mcp-server']")"
+          cat > release-notes.md <<EOF
+          Community-maintained MS365 MCP container distribution.
+
+          - Distribution: \`$version\`
+          - Upstream \`@softeria/ms-365-mcp-server\`: \`$upstream_version\`
+          - Image: \`ghcr.io/x1pher/ms365-mcp@$IMAGE_DIGEST\`
+          - Source: \`$GITHUB_SHA\`
+          EOF
+          gh release create "$GITHUB_REF_NAME" \
+            --verify-tag \
+            --title "$GITHUB_REF_NAME" \
+            --notes-file release-notes.md

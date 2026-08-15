@@ -21,8 +21,8 @@ jobs:
           set -euo pipefail
           distribution_version="$(node -p "require('./package.json').version")"
           upstream_version="$(node -p "require('./package.json').dependencies['@softeria/ms-365-mcp-server']")"
-          test "$distribution_version" = "0.128.2-x1pher.1"
-          test "$upstream_version" = "0.128.2"
+          test "$distribution_version" = "0.143.0-x1pher.1"
+          test "$upstream_version" = "0.143.0"
           npm audit --omit=dev --package-lock-only --audit-level=moderate
 
       - name: Build image
@@ -39,7 +39,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(docker run --rm --entrypoint node ms365-mcp:ci -p "require('/app/node_modules/@softeria/ms-365-mcp-server/package.json').version")" = "0.128.2"
+          test "$(docker run --rm --entrypoint node ms365-mcp:ci -p "require('/app/node_modules/@softeria/ms-365-mcp-server/package.json').version")" = "0.143.0"
           docker run --rm ms365-mcp:ci --help >/dev/null
           test "$(docker image inspect ms365-mcp:ci --format '{{index .Config.Labels "org.opencontainers.image.source"}}')" = "https://github.com/X1pheR/ms365-mcp"
           test "$(docker image inspect ms365-mcp:ci --format '{{index .Config.Labels "org.opencontainers.image.revision"}}')" = "$GITHUB_SHA"

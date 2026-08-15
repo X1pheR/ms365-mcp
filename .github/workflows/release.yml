@@ -25,7 +25,7 @@ jobs:
           distribution_version="$(node -p "require('./package.json').version")"
           upstream_version="$(node -p "require('./package.json').dependencies['@softeria/ms-365-mcp-server']")"
           test "$GITHUB_REF_NAME" = "v${distribution_version}"
-          test "$upstream_version" = "0.128.2"
+          test "$upstream_version" = "0.143.0"
           git fetch origin main --depth=1
           test "$(git rev-parse HEAD)" = "$(git rev-parse origin/main)"
           npm audit --omit=dev --package-lock-only --audit-level=moderate

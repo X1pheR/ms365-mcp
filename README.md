@@ -25,8 +25,8 @@ The repository deliberately does **not** own Hypershell-specific tool filters, G
 
 | Component | Tested baseline |
 |---|---|
-| Upstream package | `@softeria/ms-365-mcp-server` `0.128.2` |
-| Distribution release | `0.128.2-x1pher.1` |
+| Upstream package | `@softeria/ms-365-mcp-server` `0.143.0` |
+| Distribution release | `0.143.0-x1pher.1` |
 | Runtime | Node 22 Bookworm, pinned by image digest in `Dockerfile` |
 
 A newer upstream package does not become supported merely because it exists. Updating the upstream baseline is compatibility work: update the exact dependency and lock, run CI/security checks, test representative MCP behavior, then publish a new distribution release.
@@ -50,12 +50,14 @@ services:
 To inspect the packaged upstream CLI:
 
 ```bash
-docker run --rm ghcr.io/x1pher/ms365-mcp:0.128.2-x1pher.1 --help
+docker run --rm ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.1 --help
 ```
 
 ## Runtime state
 
 The image contains the application and its dependencies under `/app`. Persistent account and token state should be mounted separately at `/data` when file-backed authentication state is used.
+
+Starting with the tested upstream `0.143.0` baseline, the upstream server encrypts the file-backed token cache. In the tested headless container fallback it creates `/data/.cache-key` with mode `0600` alongside the encrypted token cache. Persist and protect the complete `/data` state boundary; `token-cache.json` without its matching `.cache-key` is not a complete recovery set. When upgrading from an older plaintext-cache release, keep a protected pre-upgrade copy until the new release has passed runtime acceptance because older releases cannot use the migrated encrypted cache.
 
 Example:
 
@@ -66,7 +68,7 @@ docker run --rm \
   -e MS365_MCP_TOKEN_CACHE_PATH=/data/token-cache.json \
   -e MS365_MCP_SELECTED_ACCOUNT_PATH=/data/selected-account.json \
   -v ms365-data:/data \
-  ghcr.io/x1pher/ms365-mcp:0.128.2-x1pher.1 \
+  ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.1 \
   --http 0.0.0.0:3010
 ```
 
@@ -82,7 +84,7 @@ If this project ever needs to modify upstream source or carry a source-level beh
 
 ```bash
 docker build \
-  --build-arg VERSION=0.128.2-x1pher.1 \
+  --build-arg VERSION=0.143.0-x1pher.1 \
   --build-arg REVISION="$(git rev-parse HEAD)" \
   -t ms365-mcp:local \
   .
@@ -100,10 +102,10 @@ docker run --rm --entrypoint node ms365-mcp:local \
 The distribution version intentionally distinguishes this maintained container release from the upstream npm version. For example:
 
 ```text
-upstream:     0.128.2
-distribution: 0.128.2-x1pher.1
-Git tag:      v0.128.2-x1pher.1
-image tag:    0.128.2-x1pher.1
+upstream:     0.143.0
+distribution: 0.143.0-x1pher.1
+Git tag:      v0.143.0-x1pher.1
+image tag:    0.143.0-x1pher.1
 ```
 
 A release tag is accepted only from the current `main` revision. Release automation re-runs the production dependency audit, builds the container and publishes the versioned GHCR image. Consumers should promote the resulting manifest digest.

@@ -1,5 +1,7 @@
 # MS365 MCP Container
 
+[![OpenSSF Scorecard](https://api.scorecard.dev/projects/github.com/X1pheR/ms365-mcp/badge)](https://scorecard.dev/viewer/?uri=github.com/X1pheR/ms365-mcp)
+
 Community-maintained container distribution for the upstream [`@softeria/ms-365-mcp-server`](https://github.com/Softeria/ms-365-mcp-server) project.
 
 This repository is **not a source fork**. It does not copy or modify the upstream MS365 MCP server source. It owns a separate distribution boundary: the tested upstream package version, dependency lock, pinned Node base image, container build, security checks and published GHCR image. Upstream application behavior, tools and Microsoft Graph integration remain owned by Softeria.
@@ -97,6 +99,12 @@ docker run --rm --entrypoint node ms365-mcp:local \
   -p "require('/app/node_modules/@softeria/ms-365-mcp-server/package.json').version"
 ```
 
+## Feedback and contributions
+
+Use [GitHub Issues](https://github.com/X1pheR/ms365-mcp/issues) for wrapper/distribution bugs and focused proposals and pull requests for proposed changes. See [CONTRIBUTING.md](CONTRIBUTING.md) for the development workflow, distribution boundary and validation expectations. Security issues must follow the private process in [SECURITY.md](SECURITY.md).
+
+User-visible distribution changes are summarized in [CHANGELOG.md](CHANGELOG.md).
+
 ## Release model
 
 The distribution version intentionally distinguishes this maintained container release from the upstream npm version. For example:
@@ -108,11 +116,13 @@ Git tag:      v0.143.0-x1pher.1
 image tag:    0.143.0-x1pher.1
 ```
 
-A release tag is accepted only from the current `main` revision. Release automation re-runs the production dependency audit, builds the container and publishes the versioned GHCR image. Consumers should promote the resulting manifest digest.
+A normal release tag is accepted only from the current `main` revision; guarded manual recovery may republish an already accepted exact tag only when its source commit remains on `main`. Release automation re-runs the production dependency audit, builds and publishes the versioned GHCR image, generates signed GitHub/Sigstore build provenance for the exact manifest digest, creates the GitHub Release as a draft and only then publishes it. Consumers should promote the resulting manifest digest and may independently verify its attestation.
 
 ## Security
 
 Do not place Microsoft tokens, client secrets, tenant-specific credentials or account-state files in this repository or image. See [`SECURITY.md`](SECURITY.md) for reporting guidance and the upstream project for vulnerabilities in the MS365 MCP application itself.
+
+GitHub CI verifies the production dependency audit and image contract. Dependabot tracks npm and GitHub Actions updates, external Actions are pinned to full commit SHAs, CodeQL/secret-scanning controls are reviewed at public-release acceptance, and OpenSSF Scorecard publishes an independent repository-security signal.
 
 ## License and upstream attribution
 

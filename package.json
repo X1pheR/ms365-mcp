@@ -5,6 +5,6 @@
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "@softeria/ms-365-mcp-server": "0.143.0"
+    "@softeria/ms-365-mcp-server": "0.145.0"
   }
 }

@@ -57,6 +57,11 @@ jobs:
           fi
           npm audit --omit=dev --package-lock-only --audit-level=moderate
 
+      - name: Run canonical local verifier
+        env:
+          VERIFY_REVISION: ${{ env.EXPECTED_SHA }}
+        run: ./scripts/verify.sh
+
       - name: Authenticate to GHCR
         shell: bash
         env:

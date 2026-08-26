@@ -46,7 +46,7 @@ For standing deployments, prefer the immutable manifest digest returned by the a
 ```yaml
 services:
   ms365:
-    image: ghcr.io/x1pher/ms365-mcp@sha256:<accepted-manifest-digest>
+    image: ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.1
 ```
 
 To inspect the packaged upstream CLI:

@@ -1,5 +1,11 @@
 # Changelog
 
+## 0.143.0-x1pher.2 - 2026-09-02
+
+- Add a narrow downstream Outlook mail-attachment persistence extension without modifying the pinned Softeria source package.
+- Add `save-mail-attachment`, `promote-mail-attachment`, and `cleanup-mail-attachment` with server-side Graph `/$value` streaming, SHA-256 provenance, size/path/no-clobber guards, temporary TTL cleanup, and optional bounded durable storage.
+- Keep attachment bytes and base64 out of MCP/model responses.
+
 This file records user-visible changes to the maintained MS365 MCP container distribution. Upstream application changes remain documented by the Softeria project.
 
 ## Unreleased

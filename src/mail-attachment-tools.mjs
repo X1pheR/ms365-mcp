@@ -316,7 +316,17 @@ async function streamAttachmentToTemporaryFile(response, directory, maxBytes) {
   }
 }
 
+function validateSaveModeParams(params) {
+  if (params.mode === 'durable' && !params.durable_relative_directory) {
+    throw new Error('durable_relative_directory is required in durable mode');
+  }
+  if (params.mode !== 'durable' && params.durable_relative_directory) {
+    throw new Error('durable_relative_directory is only valid in durable mode');
+  }
+}
+
 async function downloadAttachment(graphClient, params, config) {
+  validateSaveModeParams(params);
   const expectedSha256 = validateExpectedSha256(params.expected_sha256);
   const accessToken = await accessTokenFor(graphClient);
   const metadata = await fetchAttachmentMetadata(graphClient, params.message_id, params.attachment_id, accessToken);
@@ -558,6 +568,10 @@ function failure(error) {
   };
 }
 
+// Keep this as a plain ZodObject. The upstream MCP schema normalizer serializes
+// ZodEffects (for example from superRefine()) as an empty object schema in the
+// live tools/list contract. Cross-field mode validation therefore belongs in
+// the handler, while this object preserves the complete machine-readable API.
 const saveSchema = z.object({
   message_id: z.string().min(1).describe('Microsoft Graph message id.'),
   attachment_id: z.string().min(1).describe('Microsoft Graph attachment id from list-mail-attachments.'),
@@ -567,13 +581,6 @@ const saveSchema = z.object({
   expected_sha256: z.string().optional().describe('Optional expected SHA-256 for integrity verification.'),
   allow_inline: z.boolean().default(false).describe('Allow an inline fileAttachment. Off by default.'),
   overwrite: z.boolean().default(false).describe('Replace an existing regular file only when explicitly true. Default is no-clobber.'),
-}).superRefine((value, ctx) => {
-  if (value.mode === 'durable' && !value.durable_relative_directory) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['durable_relative_directory'], message: 'durable_relative_directory is required in durable mode' });
-  }
-  if (value.mode === 'temporary' && value.durable_relative_directory) {
-    ctx.addIssue({ code: z.ZodIssueCode.custom, path: ['durable_relative_directory'], message: 'durable_relative_directory is only valid in durable mode' });
-  }
 });
 
 const promoteSchema = z.object({

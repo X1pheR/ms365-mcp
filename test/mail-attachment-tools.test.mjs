@@ -72,6 +72,13 @@ test('runtime allowlist controls downstream tool registration', () => {
     tempRoot: '/tmp/none', maxBytes: 1, tempTtlSeconds: 1,
   });
   assert.deepEqual([...server.tools.keys()], ['save-mail-attachment']);
+  const saveInputSchema = server.tools.get('save-mail-attachment').config.inputSchema;
+  assert.equal(saveInputSchema.constructor.name, 'ZodObject');
+  assert.deepEqual(
+    Object.keys(saveInputSchema.shape).sort(),
+    ['allow_inline', 'attachment_id', 'durable_relative_directory', 'expected_sha256', 'file_name', 'message_id', 'mode', 'overwrite'].sort(),
+  );
+  assert.equal(saveInputSchema.safeParse({ message_id: 'm1', attachment_id: 'a1' }).success, true);
 
   const blocked = fakeServer();
   registerMailAttachmentTools(blocked, {}, { enabledTools: 'save-mail-attachment', allowedScopes: 'User.Read' }, {
@@ -116,6 +123,32 @@ test('temporary save streams PDF, returns SHA/provenance, promotes, and cleans u
     const cleaned = parseToolResult(await server.tools.get('cleanup-mail-attachment').callback({ artifact_id: saved.artifact_id }));
     assert.equal(cleaned.deleted, true);
     await assert.rejects(fs.access(path.dirname(saved.path)));
+  } finally {
+    await fs.rm(host, { recursive: true, force: true });
+  }
+});
+
+test('save rejects inconsistent mode parameters before Graph access', async () => {
+  const { host, config } = await fixture();
+  try {
+    const bytes = Buffer.from('%PDF-1.4\nX\n');
+    const graphClient = graphClientFor(bytes);
+    const server = fakeServer();
+    registerMailAttachmentTools(server, graphClient, { enabledTools: 'save-mail-attachment', allowedScopes: 'Mail.Read' }, config);
+
+    const missingDirectory = await server.tools.get('save-mail-attachment').callback({
+      message_id: 'm1', attachment_id: 'a1', mode: 'durable', overwrite: false, allow_inline: false,
+    });
+    assert.equal(missingDirectory.isError, true);
+    assert.match(missingDirectory.content[0].text, /durable_relative_directory is required/);
+    assert.deepEqual(graphClient.calls, []);
+
+    const directoryInTemporaryMode = await server.tools.get('save-mail-attachment').callback({
+      message_id: 'm1', attachment_id: 'a1', mode: 'temporary', durable_relative_directory: 'Case/Evidence', overwrite: false, allow_inline: false,
+    });
+    assert.equal(directoryInTemporaryMode.isError, true);
+    assert.match(directoryInTemporaryMode.content[0].text, /only valid in durable mode/);
+    assert.deepEqual(graphClient.calls, []);
   } finally {
     await fs.rm(host, { recursive: true, force: true });
   }

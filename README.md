@@ -4,7 +4,7 @@
 
 Community-maintained container distribution for the upstream [`@softeria/ms-365-mcp-server`](https://github.com/Softeria/ms-365-mcp-server) project.
 
-This repository is **not a source fork**. It does not copy or modify the upstream MS365 MCP server source. It owns a separate distribution boundary: the tested upstream package version, dependency lock, pinned Node base image, container build, security checks and published GHCR image. Upstream application behavior, tools and Microsoft Graph integration remain owned by Softeria.
+This repository is **not a source fork**. It does not copy or modify the upstream MS365 MCP server source. It owns a separate distribution boundary: the tested upstream package version, dependency lock, pinned Node base image, container build, security checks and published GHCR image. The distribution also carries one narrow downstream extension for safe server-side Outlook attachment persistence; all ordinary Microsoft 365 behavior and Graph endpoint implementations remain owned by Softeria.
 
 This project is maintained independently by X1pheR and is not affiliated with, endorsed by or officially maintained by Softeria or Microsoft.
 
@@ -21,14 +21,14 @@ The repository therefore provides:
 - CI and dependency/security checks;
 - versioned GHCR publication for immutable deployment by manifest digest.
 
-The repository deliberately does **not** own Hypershell-specific tool filters, Graph scopes, ports, token state or deployment configuration. Those belong to the consuming deployment.
+The repository deliberately does **not** own Hypershell-specific tool filters, Graph scopes, ports, token state or storage locations. Those belong to the consuming deployment. The downstream attachment extension is dormant unless its tool names are admitted by the normal upstream `--enabled-tools` pattern; durable storage is disabled unless a deployment explicitly configures a durable root.
 
 ## Current compatibility baseline
 
 | Component | Tested baseline |
 |---|---|
 | Upstream package | `@softeria/ms-365-mcp-server` `0.143.0` |
-| Distribution release | `0.143.0-x1pher.1` |
+| Distribution release | `0.143.0-x1pher.2` |
 | Runtime | Node 22 Bookworm, pinned by image digest in `Dockerfile` |
 
 A newer upstream package does not become supported merely because it exists. Updating the upstream baseline is compatibility work: update the exact dependency and lock, run CI/security checks, test representative MCP behavior, then publish a new distribution release.
@@ -46,13 +46,13 @@ For standing deployments, prefer the immutable manifest digest returned by the a
 ```yaml
 services:
   ms365:
-    image: ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.1
+    image: ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.2
 ```
 
 To inspect the packaged upstream CLI:
 
 ```bash
-docker run --rm ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.1 --help
+docker run --rm ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.2 --help
 ```
 
 ## Runtime state
@@ -70,7 +70,7 @@ docker run --rm \
   -e MS365_MCP_TOKEN_CACHE_PATH=/data/token-cache.json \
   -e MS365_MCP_SELECTED_ACCOUNT_PATH=/data/selected-account.json \
   -v ms365-data:/data \
-  ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.1 \
+  ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.2 \
   --http 0.0.0.0:3010
 ```
 
@@ -78,9 +78,19 @@ The upstream server owns authentication behavior and Microsoft Graph calls. This
 
 ## Tool surface
 
-This repository does not define, patch or filter MCP tools. The tool surface comes entirely from the pinned upstream package and can also be narrowed at runtime with upstream options. Refer to the [upstream project](https://github.com/Softeria/ms-365-mcp-server) for the tool and CLI reference for the pinned package baseline.
+The ordinary tool surface comes from the pinned upstream package and is narrowed at runtime with upstream options. In addition, this distribution registers three downstream attachment-storage tools in the same authenticated MS365 process:
 
-If this project ever needs to modify upstream source or carry a source-level behavioral delta, that is a different maintenance boundary: create or adopt an explicit source fork, document the delta and track upstream separately. Do not silently turn this distribution repository into a hidden fork.
+| Tool | Purpose |
+|---|---|
+| `save-mail-attachment` | Stream one Graph `fileAttachment` through `/$value` directly into bounded temporary or durable storage and return SHA-256/provenance without returning base64. |
+| `promote-mail-attachment` | Re-hash and copy a temporary attachment artifact into the configured durable documents root. |
+| `cleanup-mail-attachment` | Delete exactly one validated temporary attachment artifact; it never deletes durable documents. |
+
+The tools honor the normal `--enabled-tools` filter. `save-mail-attachment` is also suppressed when an explicit `--allowed-scopes` set does not cover mail read access. Inline attachments are denied by default, non-`fileAttachment` types are rejected, downloads are size-bounded during both metadata preflight and streaming, filenames/paths are constrained, publication is atomic/no-clobber by default, temporary artifacts expire, and responses contain metadata only.
+
+Deployment configuration owns the storage boundary through `MS365_ATTACHMENT_TEMP_ROOT`, optional `MS365_ATTACHMENT_DURABLE_ROOT`, optional host-path mappings, `MS365_ATTACHMENT_MAX_BYTES`, and `MS365_ATTACHMENT_TEMP_TTL_SECONDS`. The default maximum is 50 MiB and the default temporary TTL is 24 hours.
+
+Refer to the [upstream project](https://github.com/Softeria/ms-365-mcp-server) for the upstream tool and CLI reference for the pinned package baseline. If this project ever needs to modify upstream source or carry a source-level behavioral delta inside Softeria code, that is a different maintenance boundary: create or adopt an explicit source fork, document the delta and track upstream separately. Do not silently turn this distribution repository into a hidden fork.
 
 ## Build locally
 

@@ -8,6 +8,8 @@ import { getRequestTokens } from '@softeria/ms-365-mcp-server/dist/request-conte
 
 const DEFAULT_MAX_BYTES = 50 * 1024 * 1024;
 const DEFAULT_TEMP_TTL_SECONDS = 24 * 60 * 60;
+const SHARED_DIRECTORY_MODE = 0o750;
+const SHARED_FILE_MODE = 0o640;
 const IO_CHUNK_BYTES = 64 * 1024;
 const META_FILE = '.hypershell-attachment.json';
 const UUID_RE = /^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
@@ -127,7 +129,7 @@ async function ensureSafeSubdirectory(root, relativeDirectory) {
     } catch (error) {
       if (error?.code !== 'ENOENT') throw error;
       if (index === 0) throw new Error(`Durable top-level owner does not exist: ${segment}`);
-      await fs.mkdir(next, { mode: 0o700 });
+      await fs.mkdir(next, { mode: SHARED_DIRECTORY_MODE });
     }
     current = await fs.realpath(next);
     if (!isWithin(root, current)) throw new Error('durable_relative_directory resolves outside the configured durable root');
@@ -184,7 +186,7 @@ async function writeJsonAtomic(filePath, value) {
   let handle;
   let created = false;
   try {
-    handle = await fs.open(tempPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+    handle = await fs.open(tempPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, SHARED_FILE_MODE);
     created = true;
     await handle.writeFile(`${JSON.stringify(value, null, 2)}\n`, 'utf8');
     await handle.sync();
@@ -281,7 +283,7 @@ async function streamAttachmentToTemporaryFile(response, directory, maxBytes) {
   let handle;
   let created = false;
   try {
-    handle = await fs.open(tempPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+    handle = await fs.open(tempPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, SHARED_FILE_MODE);
     created = true;
     const hash = createHash('sha256');
     const reader = response.body.getReader();
@@ -351,7 +353,7 @@ async function downloadAttachment(graphClient, params, config) {
     root = await ensureRoot(config.tempRoot);
     artifactId = randomUUID();
     directory = path.join(root, artifactId);
-    await fs.mkdir(directory, { mode: 0o700 });
+    await fs.mkdir(directory, { mode: SHARED_DIRECTORY_MODE });
     hostRoot = config.hostTempRoot;
   }
 
@@ -437,7 +439,7 @@ async function copyAndHashSource(sourcePath, destinationDirectory, maxBytes) {
     const before = await source.stat();
     if (!before.isFile()) throw new Error('Temporary attachment is not a regular file');
     if (before.size > maxBytes) throw new Error(`Temporary attachment exceeds maximum size of ${maxBytes} bytes`);
-    destination = await fs.open(tempPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, 0o600);
+    destination = await fs.open(tempPath, constants.O_WRONLY | constants.O_CREAT | constants.O_EXCL | constants.O_NOFOLLOW, SHARED_FILE_MODE);
     created = true;
     const hash = createHash('sha256');
     const buffer = Buffer.allocUnsafe(IO_CHUNK_BYTES);

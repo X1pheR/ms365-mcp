@@ -106,6 +106,9 @@ test('temporary save streams PDF, returns SHA/provenance, promotes, and cleans u
     assert.equal(saved.sha256.length, 64);
     assert.equal('contentBytes' in saved, false);
     assert.deepEqual(await fs.readFile(saved.path), bytes);
+    assert.equal((await fs.stat(path.dirname(saved.path))).mode & 0o777, 0o750);
+    assert.equal((await fs.stat(saved.path)).mode & 0o777, 0o640);
+    assert.equal((await fs.stat(path.join(path.dirname(saved.path), '.hypershell-attachment.json'))).mode & 0o777, 0o640);
     assert.ok(graphClient.calls.some((value) => value.endsWith('/$value')));
 
     const promoted = parseToolResult(await server.tools.get('promote-mail-attachment').callback({
@@ -115,6 +118,8 @@ test('temporary save streams PDF, returns SHA/provenance, promotes, and cleans u
     }));
     assert.equal(promoted.sha256, saved.sha256);
     assert.deepEqual(await fs.readFile(promoted.path), bytes);
+    assert.equal((await fs.stat(path.dirname(promoted.path))).mode & 0o777, 0o750);
+    assert.equal((await fs.stat(promoted.path)).mode & 0o777, 0o640);
 
     await assert.rejects(
       fs.access(path.join(config.durableRoot, '..', 'escape.pdf')),

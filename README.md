@@ -90,6 +90,8 @@ The tools honor the normal `--enabled-tools` filter. `save-mail-attachment` is a
 
 Deployment configuration owns the storage boundary through `MS365_ATTACHMENT_TEMP_ROOT`, optional `MS365_ATTACHMENT_DURABLE_ROOT`, optional host-path mappings, `MS365_ATTACHMENT_MAX_BYTES`, and `MS365_ATTACHMENT_TEMP_TTL_SECONDS`. The default maximum is 50 MiB and the default temporary TTL is 24 hours.
 
+Saved attachment directories are group-readable/traversable (`0750`) and files/provenance are group-readable (`0640`), inheriting the existing storage root group (for Hypershell, `homelab`). No permissions are granted to other users.
+
 Refer to the [upstream project](https://github.com/Softeria/ms-365-mcp-server) for the upstream tool and CLI reference for the pinned package baseline. If this project ever needs to modify upstream source or carry a source-level behavioral delta inside Softeria code, that is a different maintenance boundary: create or adopt an explicit source fork, document the delta and track upstream separately. Do not silently turn this distribution repository into a hidden fork.
 
 ## Build locally

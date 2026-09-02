@@ -1,5 +1,10 @@
 # Changelog
 
+## 0.143.0-x1pher.4
+
+- Make saved attachment artifacts readable by the existing shared Hypershell group while keeping access closed to other users: artifact/subdirectories use `0750` and files/provenance use `0640`.
+- Add regression coverage for temporary, promoted, and auto-created durable path permissions.
+
 ## 0.143.0-x1pher.3 - 2026-09-02
 
 - Fix the live MCP input schema for `save-mail-attachment`; all required and optional parameters are now visible through `tools/list` instead of an empty object schema.

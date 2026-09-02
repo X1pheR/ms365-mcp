@@ -86,7 +86,7 @@ The ordinary tool surface comes from the pinned upstream package and is narrowed
 | `promote-mail-attachment` | Re-hash and copy a temporary attachment artifact into the configured durable documents root. |
 | `cleanup-mail-attachment` | Delete exactly one validated temporary attachment artifact; it never deletes durable documents. |
 
-The tools honor the normal `--enabled-tools` filter. `save-mail-attachment` is also suppressed when an explicit `--allowed-scopes` set does not cover mail read access. Inline attachments are denied by default, non-`fileAttachment` types are rejected, downloads are size-bounded during both metadata preflight and streaming, filenames/paths are constrained, publication is atomic/no-clobber by default, temporary artifacts expire, and responses contain metadata only.
+The tools honor the normal `--enabled-tools` filter. `save-mail-attachment` is also suppressed when an explicit `--allowed-scopes` set does not cover mail read access. Inline attachments are denied by default, non-`fileAttachment` types are rejected, downloads are size-bounded during both metadata preflight and streaming, filenames/paths are constrained, durable saves must select an existing top-level document owner, publication is atomic/no-clobber by default, temporary artifacts expire, and responses contain metadata only.
 
 Deployment configuration owns the storage boundary through `MS365_ATTACHMENT_TEMP_ROOT`, optional `MS365_ATTACHMENT_DURABLE_ROOT`, optional host-path mappings, `MS365_ATTACHMENT_MAX_BYTES`, and `MS365_ATTACHMENT_TEMP_TTL_SECONDS`. The default maximum is 50 MiB and the default temporary TTL is 24 hours.
 

@@ -35,6 +35,7 @@ async function fixture() {
   const durableRoot = path.join(host, 'documents');
   await fs.mkdir(tempRoot);
   await fs.mkdir(durableRoot);
+  await fs.mkdir(path.join(durableRoot, 'Case'));
   return {
     host,
     config: { tempRoot, durableRoot, hostTempRoot: tempRoot, hostDurableRoot: durableRoot, maxBytes: 1024 * 1024, tempTtlSeconds: 60 },
@@ -143,12 +144,17 @@ test('save rejects inline, non-file attachment, oversized metadata, and no-clobb
     });
     assert.equal(traversal.isError, true);
     assert.match(traversal.content[0].text, /unsafe path segment|relative directory/);
+    const unknownOwner = await server.tools.get('save-mail-attachment').callback({
+      message_id: 'm1', attachment_id: 'a1', mode: 'durable', durable_relative_directory: 'InventedOwner', file_name: 'x.pdf', overwrite: false, allow_inline: false,
+    });
+    assert.equal(unknownOwner.isError, true);
+    assert.match(unknownOwner.content[0].text, /top-level owner does not exist/);
     const first = parseToolResult(await server.tools.get('save-mail-attachment').callback({
-      message_id: 'm1', attachment_id: 'a1', mode: 'durable', durable_relative_directory: 'Evidence', file_name: 'same.pdf', overwrite: false, allow_inline: false,
+      message_id: 'm1', attachment_id: 'a1', mode: 'durable', durable_relative_directory: 'Case/Evidence', file_name: 'same.pdf', overwrite: false, allow_inline: false,
     }));
-    assert.ok(first.path.endsWith('/Evidence/same.pdf'));
+    assert.ok(first.path.endsWith('/Case/Evidence/same.pdf'));
     const duplicate = await server.tools.get('save-mail-attachment').callback({
-      message_id: 'm1', attachment_id: 'a1', mode: 'durable', durable_relative_directory: 'Evidence', file_name: 'same.pdf', overwrite: false, allow_inline: false,
+      message_id: 'm1', attachment_id: 'a1', mode: 'durable', durable_relative_directory: 'Case/Evidence', file_name: 'same.pdf', overwrite: false, allow_inline: false,
     });
     assert.equal(duplicate.isError, true);
     assert.match(duplicate.content[0].text, /already exists/);

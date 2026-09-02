@@ -118,7 +118,7 @@ function splitRelativeDirectory(value) {
 async function ensureSafeSubdirectory(root, relativeDirectory) {
   const segments = splitRelativeDirectory(relativeDirectory);
   let current = root;
-  for (const segment of segments) {
+  for (const [index, segment] of segments.entries()) {
     const next = path.join(current, segment);
     if (!isWithin(root, next)) throw new Error('durable_relative_directory escapes the configured durable root');
     try {
@@ -126,6 +126,7 @@ async function ensureSafeSubdirectory(root, relativeDirectory) {
       if (stats.isSymbolicLink() || !stats.isDirectory()) throw new Error(`Unsafe durable path component: ${segment}`);
     } catch (error) {
       if (error?.code !== 'ENOENT') throw error;
+      if (index === 0) throw new Error(`Durable top-level owner does not exist: ${segment}`);
       await fs.mkdir(next, { mode: 0o700 });
     }
     current = await fs.realpath(next);

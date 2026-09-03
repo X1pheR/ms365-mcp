@@ -1,6 +1,6 @@
 # Changelog
 
-## 0.143.0-x1pher.4
+## 0.143.0-x1pher.4 - 2026-09-02
 
 - Make saved attachment artifacts readable by the existing shared Hypershell group while keeping access closed to other users: artifact/subdirectories use `0750` and files/provenance use `0640`.
 - Add regression coverage for temporary, promoted, and auto-created durable path permissions.

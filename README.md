@@ -28,7 +28,7 @@ The repository deliberately does **not** own Hypershell-specific tool filters, G
 | Component | Tested baseline |
 |---|---|
 | Upstream package | `@softeria/ms-365-mcp-server` `0.143.0` |
-| Distribution release | `0.143.0-x1pher.3` |
+| Distribution release | `0.143.0-x1pher.4` |
 | Runtime | Node 22 Bookworm, pinned by image digest in `Dockerfile` |
 
 A newer upstream package does not become supported merely because it exists. Updating the upstream baseline is compatibility work: update the exact dependency and lock, run CI/security checks, test representative MCP behavior, then publish a new distribution release.
@@ -46,13 +46,13 @@ For standing deployments, prefer the immutable manifest digest returned by the a
 ```yaml
 services:
   ms365:
-    image: ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.3
+    image: ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.4
 ```
 
 To inspect the packaged upstream CLI:
 
 ```bash
-docker run --rm ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.3 --help
+docker run --rm ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.4 --help
 ```
 
 ## Runtime state
@@ -70,7 +70,7 @@ docker run --rm \
   -e MS365_MCP_TOKEN_CACHE_PATH=/data/token-cache.json \
   -e MS365_MCP_SELECTED_ACCOUNT_PATH=/data/selected-account.json \
   -v ms365-data:/data \
-  ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.3 \
+  ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.4 \
   --http 0.0.0.0:3010
 ```
 

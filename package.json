@@ -6,6 +6,6 @@
   "private": true,
   "dependencies": {
     "@softeria/ms-365-mcp-server": "0.143.0",
-    "zod": "3.25.76"
+    "zod": "4.5.4"
   }
 }

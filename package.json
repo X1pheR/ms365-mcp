@@ -1,11 +1,16 @@
 {
   "name": "ms365-mcp-container",
-  "version": "0.143.0-x1pher.4",
-  "description": "Community-maintained container distribution for @softeria/ms-365-mcp-server 0.143.0",
+  "version": "0.156.2-x1pher.5",
+  "description": "Community-maintained container distribution for @softeria/ms-365-mcp-server 0.156.2",
   "license": "MIT",
   "private": true,
   "dependencies": {
-    "@softeria/ms-365-mcp-server": "0.143.0",
+    "@softeria/ms-365-mcp-server": "0.156.2",
     "zod": "3.25.76"
+  },
+  "overrides": {
+    "hono": "4.13.7",
+    "ip-address": "10.7.2",
+    "js-yaml": "4.3.2"
   }
 }

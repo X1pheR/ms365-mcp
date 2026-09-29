@@ -14,5 +14,6 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci --omit=dev \
     && npm cache clean --force
+COPY src ./src
 
-ENTRYPOINT ["/app/node_modules/.bin/ms-365-mcp-server"]
+ENTRYPOINT ["node", "/app/src/entrypoint.mjs"]

@@ -46,7 +46,7 @@ jobs:
           distribution_version="$(node -p "require('./package.json').version")"
           upstream_version="$(node -p "require('./package.json').dependencies['@softeria/ms-365-mcp-server']")"
           test "${RELEASE_TAG}" = "v${distribution_version}"
-          test "$upstream_version" = "0.143.0"
+          test "$upstream_version" = "0.156.2"
           git fetch origin main
           test "$(git rev-parse HEAD)" = "${EXPECTED_SHA}"
           test "$(git rev-list -n1 "${RELEASE_TAG}")" = "${EXPECTED_SHA}"

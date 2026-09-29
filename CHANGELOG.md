@@ -1,5 +1,12 @@
 # Changelog
 
+## 0.156.2-x1pher.5 - 2026-09-29
+
+- Update the maintained upstream package baseline to `@softeria/ms-365-mcp-server` `0.156.2`.
+- Retain the downstream `save-mail-attachment`, `promote-mail-attachment`, and `cleanup-mail-attachment` implementation after compatibility testing against the upstream `0.156.0` HTTP hardening.
+- Pin reviewed transitive security overrides: `hono` `4.13.7`, `ip-address` `10.7.2`, and `js-yaml` `4.3.2`.
+- Canonical candidate verification reports zero production npm vulnerabilities and all 8 downstream attachment tests passing.
+
 ## 0.143.0-x1pher.4 - 2026-09-02
 
 - Make saved attachment artifacts readable by the existing shared Hypershell group while keeping access closed to other users: artifact/subdirectories use `0750` and files/provenance use `0640`.

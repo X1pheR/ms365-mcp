@@ -27,11 +27,13 @@ The repository deliberately does **not** own Hypershell-specific tool filters, G
 
 | Component | Tested baseline |
 |---|---|
-| Upstream package | `@softeria/ms-365-mcp-server` `0.143.0` |
-| Distribution release | `0.143.0-x1pher.4` |
+| Upstream package | `@softeria/ms-365-mcp-server` `0.156.2` |
+| Distribution release | `0.156.2-x1pher.5` |
 | Runtime | Node 22 Bookworm, pinned by image digest in `Dockerfile` |
 
 A newer upstream package does not become supported merely because it exists. Updating the upstream baseline is compatibility work: update the exact dependency and lock, run CI/security checks, test representative MCP behavior, then publish a new distribution release.
+
+The `0.156.2-x1pher.5` baseline also pins reviewed transitive security overrides for `hono` `4.13.7`, `ip-address` `10.7.2`, and `js-yaml` `4.3.2` until the upstream dependency graph carries equivalent safe minimums.
 
 ## Image
 
@@ -46,13 +48,13 @@ For standing deployments, prefer the immutable manifest digest returned by the a
 ```yaml
 services:
   ms365:
-    image: ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.4
+    image: ghcr.io/x1pher/ms365-mcp:0.156.2-x1pher.5
 ```
 
 To inspect the packaged upstream CLI:
 
 ```bash
-docker run --rm ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.4 --help
+docker run --rm ghcr.io/x1pher/ms365-mcp:0.156.2-x1pher.5 --help
 ```
 
 ## Runtime state
@@ -70,7 +72,7 @@ docker run --rm \
   -e MS365_MCP_TOKEN_CACHE_PATH=/data/token-cache.json \
   -e MS365_MCP_SELECTED_ACCOUNT_PATH=/data/selected-account.json \
   -v ms365-data:/data \
-  ghcr.io/x1pher/ms365-mcp:0.143.0-x1pher.4 \
+  ghcr.io/x1pher/ms365-mcp:0.156.2-x1pher.5 \
   --http 0.0.0.0:3010
 ```
 
@@ -86,6 +88,8 @@ The ordinary tool surface comes from the pinned upstream package and is narrowed
 | `promote-mail-attachment` | Re-hash and copy a temporary attachment artifact into the configured durable documents root. |
 | `cleanup-mail-attachment` | Delete exactly one validated temporary attachment artifact; it never deletes durable documents. |
 
+These downstream attachment tools do not depend on upstream `download-bytes-to-file`; they keep their own bounded server-side Graph streaming path and therefore remain compatible with the upstream HTTP hardening introduced in `0.156.0`.
+
 The tools honor the normal `--enabled-tools` filter. `save-mail-attachment` is also suppressed when an explicit `--allowed-scopes` set does not cover mail read access. Inline attachments are denied by default, non-`fileAttachment` types are rejected, downloads are size-bounded during both metadata preflight and streaming, filenames/paths are constrained, durable saves must select an existing top-level document owner, publication is atomic/no-clobber by default, temporary artifacts expire, and responses contain metadata only.
 
 Deployment configuration owns the storage boundary through `MS365_ATTACHMENT_TEMP_ROOT`, optional `MS365_ATTACHMENT_DURABLE_ROOT`, optional host-path mappings, `MS365_ATTACHMENT_MAX_BYTES`, and `MS365_ATTACHMENT_TEMP_TTL_SECONDS`. The default maximum is 50 MiB and the default temporary TTL is 24 hours.
@@ -98,7 +102,7 @@ Refer to the [upstream project](https://github.com/Softeria/ms-365-mcp-server) f
 
 ```bash
 docker build \
-  --build-arg VERSION=0.143.0-x1pher.1 \
+  --build-arg VERSION=0.156.2-x1pher.5 \
   --build-arg REVISION="$(git rev-parse HEAD)" \
   -t ms365-mcp:local \
   .
@@ -122,10 +126,10 @@ User-visible distribution changes are summarized in [CHANGELOG.md](CHANGELOG.md)
 The distribution version intentionally distinguishes this maintained container release from the upstream npm version. For example:
 
 ```text
-upstream:     0.143.0
-distribution: 0.143.0-x1pher.1
-Git tag:      v0.143.0-x1pher.1
-image tag:    0.143.0-x1pher.1
+upstream:     0.156.2
+distribution: 0.156.2-x1pher.5
+Git tag:      v0.156.2-x1pher.5
+image tag:    0.156.2-x1pher.5
 ```
 
 A normal release tag is accepted only from the current `main` revision; guarded manual recovery may republish an already accepted exact tag only when its source commit remains on `main`. Release automation re-runs the production dependency audit, builds and publishes the versioned GHCR image, generates signed GitHub/Sigstore build provenance for the exact manifest digest, creates the GitHub Release as a draft and only then publishes it. Consumers should promote the resulting manifest digest and may independently verify its attestation.

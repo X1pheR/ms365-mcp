@@ -1,0 +1,10 @@
+{
+  "schema_version": 1,
+  "name": "Microsoft 365 MCP",
+  "category": "Applications",
+  "kind": "mcp-server",
+  "upstream": {
+    "repository": "Softeria/ms-365-mcp-server",
+    "reason": "Provides the maintained container, supply-chain boundary and safe server-side attachment persistence required by Hypershell."
+  }
+}
